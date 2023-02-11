@@ -1,16 +1,114 @@
-# fcm_nodejs_example
+# Flutter Settings
+-> Use Firebase CLI to add project
+-> Change CompileSDK version to 33
 
-A new Flutter project.
+```
+    import 'package:firebase_core/firebase_core.dart';
+    import 'package:firebase_messaging/firebase_messaging.dart';
+```
 
-## Getting Started
+Add following files
+firebaes_notifcation.dart
+```
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  LocalNotificationService.initialize();
+  log('Handling a background message: ${message.messageId}');
+  LocalNotificationService.createanddisplaynotification(message);
+}
 
-This project is a starting point for a Flutter application.
+class FirebaseNotifications {
+  static final FirebaseMessaging _firebaseMessaging =
+      FirebaseMessaging.instance;
 
-A few resources to get you started if this is your first Flutter project:
+  static Future<void> initialize() async {
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    _firebaseMessaging.requestPermission();
+    _firebaseMessaging.getInitialMessage().then((RemoteMessage? message) => {
+          if (message != null)
+            {
+              LocalNotificationService.createanddisplaynotification(message),
+              log('Message data: ${message.notification!.title}')
+            },
+        });
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) => {
+          LocalNotificationService.createanddisplaynotification(message),
+          log('Message data: ${message.notification!.title}'),
+        });
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) => {
+          LocalNotificationService.createanddisplaynotification(message),
+          log('Message data: ${message.notification!.title}'),
+        });
+
+    const storage = FlutterSecureStorage();
+
+    String? fcmToken = await storage.read(key: 'fcmToken');
+    if (fcmToken == null) {
+      fcmToken = await _firebaseMessaging.getToken();
+      await storage.write(key: 'fcmToken', value: fcmToken);
+
+      // TODO: Send token to server
+    }
+    log('FCM Token: $fcmToken');
+  }
+}
+```
+
+local_notification.dart
+```
+class LocalNotificationService {
+  static final FlutterLocalNotificationsPlugin _notificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
+  static void initialize() {
+// initializationSettings for Android
+    const InitializationSettings initializationSettings =
+        InitializationSettings(
+      android: AndroidInitializationSettings("@mipmap/ic_launcher"),
+    );
+
+    _notificationsPlugin.initialize(initializationSettings);
+  }
+
+  static void createanddisplaynotification(RemoteMessage message) async {
+    try {
+      final id = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+      const NotificationDetails notificationDetails = NotificationDetails(
+        android: AndroidNotificationDetails(
+          "pushnotificationapp",
+          "pushnotificationappchannel",
+          importance: Importance.max,
+          priority: Priority.high,
+        ),
+      );
+
+      await _notificationsPlugin.show(
+        id,
+        message.notification!.title,
+        message.notification!.body,
+        notificationDetails,
+        payload: message.data['_id'],
+      );
+    } on Exception catch (e) {
+      log(e.toString());
+    }
+  }
+}
+```
+
+To your main.dart
+```
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  LocalNotificationService.initialize();
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  await FirebaseNotifications.initialize();
+  runApp(const MyApp());
+}
+```
+
