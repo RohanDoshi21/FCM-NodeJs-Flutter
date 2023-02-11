@@ -18,7 +18,6 @@ app.get("/ping", (req, res) => {
 app.post("/notify", async (req, res) => {
 	const { title, body } = req.body;
 	try {
-		console.log("title: ", title);
 
 		if (admin.apps.length === 0) {
 			admin.initializeApp({
