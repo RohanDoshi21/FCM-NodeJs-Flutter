@@ -1,4 +1,4 @@
-# Flutter Settings
+## Flutter Settings
 -> Use Firebase CLI to add project
 -> Change CompileSDK version to 33
 
