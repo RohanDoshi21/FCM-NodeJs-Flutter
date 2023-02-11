@@ -2,14 +2,14 @@
 -> Use Firebase CLI to add project
 -> Change CompileSDK version to 33
 
-```
+```Dart
     import 'package:firebase_core/firebase_core.dart';
     import 'package:firebase_messaging/firebase_messaging.dart';
 ```
 
 Add following files
 firebaes_notifcation.dart
-```
+```Dart
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   LocalNotificationService.initialize();
@@ -57,7 +57,7 @@ class FirebaseNotifications {
 ```
 
 local_notification.dart
-```
+```Dart
 class LocalNotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
@@ -99,7 +99,7 @@ class LocalNotificationService {
 ```
 
 To your main.dart
-```
+```Dart
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
